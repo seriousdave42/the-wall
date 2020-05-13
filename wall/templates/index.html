@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeWall</title>
+</head>
+<body>
+    {% if logged_in %}
+        <a href="/login/logout">Log out</a>
+        <h1>This is Your Life, {{first_name|capfirst}}!</h1>
+        <form action="/new_post" method="POST">Make a Post<br>
+            {% csrf_token %}
+            <textarea name="post_text" placeholder="Say something..."></textarea>
+            <input type="submit" value="Post">
+        </form>
+    {% else %}
+        <a href="/login">Log in / Register</a>
+        <h1>Welcome to LifeWall!!</h1>
+    {% endif %}
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{message}}</p>
+        {% endfor %}
+    {% endif %}
+    <h2>Recent Posts</h2>
+    {% for post in recent_posts %}
+        <h3>{{post.user.first_name}} {{post.user.last_name}} {{post.created_at|timesince}} ago:</h3>
+        <p>{{post.post_text}}</p>
+        {% if logged_in and post.user.id == user_id and post.deletable %}
+            <form action="/delete_post" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="post_id" value={{post.id}}>
+                <input type="submit" value="Delete">
+            </form><br>
+        {% endif %}
+        {% if logged_in %}
+            {% for comment in post.comments.all %}
+                <h4>    {{comment.user.first_name}} {{comment.user.last_name}} {{comment.created_at|timesince}} ago:</h4>
+                <p>     {{comment.comment_text}}</p>
+                {% if comment.user.id == user_id %}
+                    <form action="/delete_comment" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="comment_id" value={{comment.id}}>
+                        <input type="submit" value="Delete">
+                    </form><br>
+                {% endif %}
+            {% endfor %}
+            <form action="/new_comment" method="POST">Make a Comment<br>
+                {% csrf_token %}
+                <textarea name="comment_text" placeholder="Fight!"></textarea>
+                <input type="hidden" name="post_id" value={{post.id}}>
+                <input type="submit" value="Comment">
+            </form><br>
+        {% endif %}
+    {% endfor %}
+</body>
+</html>
